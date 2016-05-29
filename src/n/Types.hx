@@ -49,8 +49,9 @@ enum Lexem {
 	AccOpen		;
 	AccCondOpen	;
 	AccClose	;
-	TagOpen		;
-	TagClose	;
+	TagOpen(str:String);
+	TagClose(str:String);
+	TagSelfClosed(str:String);
 	BrackOpen	;
 	BrackClose	;
 	Star		;
@@ -67,4 +68,5 @@ enum Ast {
 	CondUniqueEvent(str:String);
 	Tag(tag:String, sub:Ast);
 	Nop;
+	Script( str:String );
 }

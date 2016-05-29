@@ -51,38 +51,46 @@ class Gram
 				var lit = switch(elem) {
 					default: throw "error";
 					case Star: "*";
-					case DoubleStar: "*";
-					case Pipe: "*";
+					case DoubleStar: "**";
+					case Pipe: "|";
+				}
+				inline function closure(str:Array<Lexem>) {
+					return 
+					switch(elem) {
+						default: Sentence(restring(str));
+						case Star: Em( _parse(str , 0 ));
+						case DoubleStar: Strong( _parse(str , 0 ));
+						case Pipe: Script( restring(str) );
+					}
 				}
 				var res = -1;
 				for ( i in pos+1...str.length)
-					if ( str[i] == Star){
+					if ( str[i] == elem){
 						res = i;
 						break;
 					}
 				if ( res == -1) {
-					trace("corresponding * not found");
-					return Seq( Sentence("*"), _parse( str, pos + 1));
+					trace("corresponding "+elem+" not found");
+					return mkSeq( Sentence(lit), _parse( str, pos + 1));
 				}
 				else {
 					var sub = str.slice(pos + 1, res);
 					var rest = str.slice(res + 1, str.length);
-					if ( rest.length == 0) {
-						return Em( _parse(sub, 0));
-					}
-					else 
-						return Seq( Em( _parse(sub,0)), _parse(rest,0));
+					return mkSeq( closure( sub ), _parse(rest,0));
 				}
 				
-			case AccClose, BrackClose, TagClose:
+			case AccClose, BrackClose, TagClose(_):
 				trace( "unexpected " + str[pos]);
-				return Seq( Sentence(n.Lex.lexemToString(str[pos])), _parse(str, pos + 1));
+				return mkSeq( Sentence(restringOne(str[pos])), _parse(str, pos + 1));
+			
+			case TagSelfClosed(s): return Tag( s , n.Ast.Nop );
+			
+			case TagOpen(s):
+				var res = seek( str, pos + 1, TagClose(s) );
+				if ( res == -1) return mkSeq( Sentence(restringOne(str[pos])), _parse( str, pos + 1));
 				
-			case TagOpen:
-				//find end bracket
-				//find end tag
-				//parse subcontent
-				return Nop;
+				var content : Ast = _parse( str.slice( pos+1, res), 0);
+				return mkSeq(Tag( s , content), _parse( str, res + 1) );
 				
 			case Literal(str):
 				return Sentence( str );
@@ -106,25 +114,33 @@ class Gram
 				}
 				var res = seek( str, pos + 1, close );
 				if ( res == -1) {
-					trace("corresponding ] not found");
-					return Seq( Sentence("["), _parse( str, pos + 1));
+					trace("corresponding "+close+" not found");
+					return mkSeq( Sentence(restringOne(str[pos])), _parse( str, pos + 1));
 				}
-				else {
-					var sub = str.slice(pos + 1, res);
-					var rest = str.slice(res + 1, str.length);
-					if ( rest.length == 0) {
-						return closure( sub );
-					}
-					else 
-						return Seq( closure(sub), _parse(rest,0));
-				}
+				
+				var sub = str.slice(pos + 1, res);
+				var rest = str.slice(res + 1, str.length);
+				return mkSeq( closure(sub), _parse(rest,0));
 		};
 	}
 	
-	inline function seek(str:Array<Lexem>, start:Int, tok:Lexem) : Int {
+	inline function mkSeq( ast, rest ) {
+		if ( rest == Nop )
+			return ast;
+		else 
+			return Seq( ast, rest);
+	}
+	
+	inline function restringOne(elem) return  n.Lex.lexemToString(elem);
+	
+	inline function restring(str:Array<Lexem>) {
+		return  n.Lex.lexemsToString(Lambda.list(str));
+	}
+	
+	function seek(str:Array<Lexem>, start:Int, tok:Lexem) : Int {
 		var res = -1;
 		for ( i in start...str.length)
-			if ( str[i] == tok){
+			if ( Type.enumEq(str[i],tok)){
 				res = i;
 				break;
 			}

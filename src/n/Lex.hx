@@ -25,37 +25,39 @@ class Lex {
 	public static inline function lexemToString(l:Lexem ) : String {
 		return 
 			switch(l) {
-				case Char(c)		: String.fromCharCode(c);
-				case Pipe			: '|';
-				case Literal(str)	: str;
-				case AccOpen		: "}";
-				case AccCondOpen	: "{!";
-				case AccClose		: "}";
-				case TagOpen		: "<";
-				case TagClose		: ">";
-				case BrackOpen		: "[";
-				case BrackClose		: "]";
-				case Star			: "*";
-				case DoubleStar		: "**";
+				case Char(c)			: String.fromCharCode(c);
+				case Pipe				: '|';
+				case Literal(str)		: str;
+				case AccOpen			: "}";
+				case AccCondOpen		: "{!";
+				case AccClose			: "}";
+				case TagOpen(str)		: "<"+str+">";
+				case TagClose(str)		: "</"+str+">";
+				case TagSelfClosed(str)	: "<"+str+"/>";
+				case BrackOpen			: "[";
+				case BrackClose			: "]";
+				case Star				: "*";
+				case DoubleStar			: "**";
 			}
 	}
 	
-	public static inline function lexemsToString(l:List<Lexem> ) {
+	public static inline function lexemsToString(l:List<Lexem> ) : String {
 		var b = new StringBuf();
 		for ( p in l) {
 			switch(p) {
-				case Char(c)		: b.addChar(c);
-				case Pipe			: b.addChar('|'.code);
-				case Literal(str)	: b.add(str);
-				case AccOpen		: b.addChar("}".code);
-				case AccCondOpen	: b.add("{!");
-				case AccClose		: b.addChar("}".code);
-				case TagOpen		: b.addChar("<".code);
-				case TagClose		: b.addChar(">".code);
-				case BrackOpen		: b.addChar("[".code);
-				case BrackClose		: b.addChar("]".code);
-				case Star			: b.addChar("*".code);
-				case DoubleStar		: b.addChar("*".code);b.addChar("*".code);
+				case Char(c)			: b.addChar(c);
+				case Pipe				: b.addChar('|'.code);
+				case Literal(str)		: b.add(str);
+				case AccOpen			: b.addChar("}".code);
+				case AccCondOpen		: b.add("{!");
+				case AccClose			: b.addChar("}".code);
+				case TagOpen(_)			: b.add(lexemToString(p));
+				case TagClose(_)		: b.add(lexemToString(p));
+				case TagSelfClosed(_)	: b.add(lexemToString(p));
+				case BrackOpen			: b.addChar("[".code);
+				case BrackClose			: b.addChar("]".code);
+				case Star				: b.addChar("*".code);
+				case DoubleStar			: b.addChar("*".code);b.addChar("*".code);
 			}
 				
 		}
@@ -98,7 +100,9 @@ class Lex {
 				}
 				else {
 					var sub = str.substring( start + 1, end);
+					result.add(Pipe);
 					result.add(Literal(sub));
+					result.add(Pipe);
 					_parse( str, end + 1, result);
 				}
 			case '{':	
@@ -111,6 +115,53 @@ class Lex {
 				else 
 					result.add( AccOpen );
 				_parse( str, pp, result);
+				
+			case '<':	
+				var pp = pos +1;
+				if ( (pp < str.length) 
+				&& str.charCodeAt(pp) == '/'.code){
+					pp++;
+					
+					while (pp<str.length&&str.charCodeAt(pp) != '>'.code)
+						pp++;
+						
+					if ( pp == str.length) { //not found cancel
+						result.add( Char('<'.code ));
+						_parse( str, pos + 1, result);
+						return;
+					}
+					else {
+						var lit = str.substring(pos+2, pp);
+						result.add(TagClose(lit));
+						_parse( str, pp + 1, result);
+					}
+				}
+				else {
+					while (pp<str.length&&str.charCodeAt(pp) != '>'.code)
+						pp++;
+						
+					if ( pp == str.length) { //not found cancel
+						result.add( Char('<'.code ) );
+						_parse( str, pos + 1, result);
+						return;
+					} else {
+						
+						if ( str.charCodeAt(pp - 1) == '/'.code) {
+							var lit = str.substring(pos + 1, pp-1);
+							result.add(TagSelfClosed(lit));
+							_parse( str, pp + 1, result);
+						}
+						else {
+							var lit = str.substring(pos + 1, pp);
+							result.add(TagOpen(lit));
+							_parse( str, pp + 1, result);
+						}
+					}
+				}
+				
+			case '>':
+				result.add( Char('>'.code) );
+				
 			default:
 				var c = str.charAt(pos);
 				if( isSentenceChar(c.fastCodeAt(0))){
@@ -129,8 +180,9 @@ class Lex {
 						else 
 							result.add( Star );
 					//case '|'.code:	result.add( Pipe );
-					case '<'.code:	result.add( TagOpen );
-					case '>'.code:	result.add( TagClose );
+					//case '<'.code:	result.add( TagOpen );
+					//case '>'.code:	result.add( TagClose );
+					
 					case '{'.code:	result.add( AccOpen );
 					case '}'.code:	result.add( AccClose );
 					case '['.code:	result.add( BrackOpen );
