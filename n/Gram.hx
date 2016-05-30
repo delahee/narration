@@ -46,13 +46,14 @@ class Gram
 					return Sentence(l);
 				else 
 					return Seq( Sentence(l), _parse( str, pp ));
-			case Star, DoubleStar, Pipe:
+			case Star, DoubleStar, Pipe,DoubleSemiColon:
 				var elem = str[pos];
 				var lit = switch(elem) {
 					default: throw "error";
 					case Star: "*";
 					case DoubleStar: "**";
 					case Pipe: "|";
+					case DoubleSemiColon:"::";
 				}
 				inline function closure(str:Array<Lexem>) {
 					return 
@@ -60,7 +61,7 @@ class Gram
 						default: Sentence(restring(str));
 						case Star: Em( _parse(str , 0 ));
 						case DoubleStar: Strong( _parse(str , 0 ));
-						case Pipe: Script( restring(str) );
+						case DoubleSemiColon,Pipe: Script( restring(str) );
 					}
 				}
 				var res = -1;

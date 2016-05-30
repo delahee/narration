@@ -5,7 +5,7 @@ using StringTools;
 
 class Lex {
 
-	static var SPECIAL_CHARS :String = "|[]{}<>*";
+	static var SPECIAL_CHARS :String = "|[]{}<>*:";
 	
 	public function new() {
 		
@@ -38,6 +38,7 @@ class Lex {
 				case BrackClose			: "]";
 				case Star				: "*";
 				case DoubleStar			: "**";
+				case DoubleSemiColon	: "::";
 			}
 	}
 	
@@ -58,6 +59,7 @@ class Lex {
 				case BrackClose			: b.addChar("]".code);
 				case Star				: b.addChar("*".code);
 				case DoubleStar			: b.addChar("*".code);b.addChar("*".code);
+				case DoubleSemiColon	: b.addChar(":".code);b.addChar(":".code);
 			}
 				
 		}
@@ -79,6 +81,26 @@ class Lex {
 			return;
 			
 		switch(str.charAt(pos)) {
+			case ':':
+				var pp = pos + 1;
+				if ( (pp<str.length) && (str.charCodeAt(pp) == ':'.code) ){
+					result.add( DoubleSemiColon );
+					
+					pp++;
+					var opp = pp;
+					while (pp<str.length&&str.charCodeAt(pp) != ':'.code&&str.charCodeAt(pp+1) != ':'.code)
+						pp++;
+						
+					var endpp = pp+1;
+					var lit = str.substring(opp, endpp);
+					result.add(Literal(lit));
+					result.add( DoubleSemiColon );
+					_parse( str, pp+3, result);
+				}
+				else {
+					result.add( Char(':'.code) );
+					_parse( str, pos + 1, result);
+				}
 			case '\\': 
 				if( (pos + 1 < str.length) 
 				&&	isSpecialChar(str.charCodeAt(pos + 1))) {

@@ -1,7 +1,5 @@
--lib hxparse
--lib castle
--cp src
 -swf test.swf
 -swf-header 600:200:0:FFFFFF
 -swf-version 16.0
 -main Test
+-cp .
