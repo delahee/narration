@@ -15,6 +15,7 @@ enum Lexem {
 	TagSelfClosed(str:String);
 	BrackOpen	;
 	BrackClose	;
+	BrackCondOpen;
 	Star		;
 	DoubleStar	;
 	DoubleSemiColon;
@@ -26,6 +27,7 @@ enum Ast {
 	Em( sub : Ast ); //*
 	Strong( sub : Ast ); //**
 	Event(str:String);
+	CondEvent(str:String);
 	UniqueEvent(str:String);
 	CondUniqueEvent(str:String);
 	Tag(tag:String, sub:Ast);

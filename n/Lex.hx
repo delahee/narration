@@ -29,12 +29,13 @@ class Lex {
 				case Pipe				: '|';
 				case Literal(str)		: str;
 				case AccOpen			: "}";
-				case AccCondOpen		: "{!";
+				case AccCondOpen		: "{?";
 				case AccClose			: "}";
 				case TagOpen(str)		: "<"+str+">";
 				case TagClose(str)		: "</"+str+">";
 				case TagSelfClosed(str)	: "<"+str+"/>";
 				case BrackOpen			: "[";
+				case BrackCondOpen		: "[?";
 				case BrackClose			: "]";
 				case Star				: "*";
 				case DoubleStar			: "**";
@@ -50,12 +51,13 @@ class Lex {
 				case Pipe				: b.addChar('|'.code);
 				case Literal(str)		: b.add(str);
 				case AccOpen			: b.addChar("}".code);
-				case AccCondOpen		: b.add("{!");
+				case AccCondOpen		: b.add("{?");
 				case AccClose			: b.addChar("}".code);
 				case TagOpen(_)			: b.add(lexemToString(p));
 				case TagClose(_)		: b.add(lexemToString(p));
 				case TagSelfClosed(_)	: b.add(lexemToString(p));
 				case BrackOpen			: b.addChar("[".code);
+				case BrackCondOpen		: b.add("[?");
 				case BrackClose			: b.addChar("]".code);
 				case Star				: b.addChar("*".code);
 				case DoubleStar			: b.addChar("*".code);b.addChar("*".code);
@@ -81,6 +83,7 @@ class Lex {
 			return;
 			
 		switch(str.charAt(pos)) {
+
 			case ':':
 				var pp = pos + 1;
 				if ( (pp<str.length) && (str.charCodeAt(pp) == ':'.code) ){
@@ -130,12 +133,23 @@ class Lex {
 			case '{':	
 				var pp = pos+1;
 				if ( (pos + 1 < str.length) 
-				&& str.charCodeAt(pp) == '!'.code){
+				&& str.charCodeAt(pp) == '?'.code){
 					result.add( AccCondOpen );
 					pp++;
 				}
 				else 
 					result.add( AccOpen );
+				_parse( str, pp, result);
+				
+			case '[':	
+				var pp = pos+1;
+				if ( (pos + 1 < str.length) 
+				&& str.charCodeAt(pp) == '?'.code){
+					result.add( BrackCondOpen );
+					pp++;
+				}
+				else 
+					result.add( BrackOpen );
 				_parse( str, pp, result);
 				
 			case '<':	
@@ -205,9 +219,7 @@ class Lex {
 					//case '<'.code:	result.add( TagOpen );
 					//case '>'.code:	result.add( TagClose );
 					
-					case '{'.code:	result.add( AccOpen );
 					case '}'.code:	result.add( AccClose );
-					case '['.code:	result.add( BrackOpen );
 					case ']'.code:	result.add( BrackClose );
 				}
 				_parse( str, pp, result);

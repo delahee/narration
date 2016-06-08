@@ -76,8 +76,7 @@ class Gram
 				}
 				else {
 					var sub = str.slice(pos + 1, res);
-					var rest = str.slice(res + 1, str.length);
-					return mkSeq( closure( sub ), _parse(rest,0));
+					return mkSeq( closure( sub ), _parse(str,res + 1));
 				}
 				
 			case AccClose, BrackClose, TagClose(_):
@@ -96,13 +95,14 @@ class Gram
 			case Literal(str):
 				return Sentence( str );
 				
-			case BrackOpen, AccOpen, AccCondOpen:
+			case BrackOpen, BrackCondOpen,AccOpen, AccCondOpen:
 				var elem = str[pos];
 				var close = switch(elem) {
 					default:throw "asert";
 					case BrackOpen: BrackClose;
 					case AccOpen: AccClose;
 					case AccCondOpen: AccClose;
+					case BrackCondOpen: BrackClose;
 				}
 				var closure = function(content) {
 					var str = n.Lex.lexemsToString(Lambda.list(content));
@@ -111,6 +111,7 @@ class Gram
 						case BrackOpen: 	Ast.Event(str);
 						case AccOpen: 		Ast.UniqueEvent(str);
 						case AccCondOpen: 	Ast.CondUniqueEvent(str);
+						case BrackCondOpen: Ast.CondEvent(str);
 					}
 				}
 				var res = seek( str, pos + 1, close );
@@ -120,8 +121,7 @@ class Gram
 				}
 				
 				var sub = str.slice(pos + 1, res);
-				var rest = str.slice(res + 1, str.length);
-				return mkSeq( closure(sub), _parse(rest,0));
+				return mkSeq( closure(sub), _parse(str,res + 1));
 		};
 	}
 	
@@ -147,4 +147,6 @@ class Gram
 			}
 		return res;
 	}
+	
+	
 }

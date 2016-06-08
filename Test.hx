@@ -5,33 +5,38 @@ class Test {
 	public static function main()
 	{
 		var tests = [
+			/*
+			" yo *dude* ",
+			" yo **dude** ",
+			"\\*",
+			"*",
 			
-			//" yo *dude* ",
-			//" yo **dude** ",
-			//"\\*",
-			//"*",
-			//
-			//"yo |dude a*b|",
-			//
-			//"yo <",
-			//"yo <lol",
-			//"yo <lol>",
-			//"yo <lol> dude",
-			//
-			//"yo <lol/>",
-			//"yo <lol> FU </lol>",
-			//"yo <lol> $ </lol",
-			//
-			//"yo {dude}",
-			//"yo {!dude}",
-			//"yo {!dude",
-			//"yo[dude]yo",
-			//"tp[]tp",
-			//"<> {} []",
-			//"|var a = 'sapin'; var b=1; var c = a*b;|",
-			//"yo [foo]",
+			"yo |dude a*b|",
+			
+			"yo <",
+			"yo <lol",
+			"yo <lol>",
+			"yo <lol> dude",
+			
+			"yo <lol/>",
+			"yo <lol> FU </lol>",
+			"yo <lol> $ </lol",
+			
+			"yo {dude}",
+			"yo {!dude}",
+			*/
+			"yo [?dude]",
+			"yo {?dude}",
+			/*
+			"yo {!dude",
+			"yo[dude]yo",
+			"tp[]tp",
+			"<> {} []",
+			"|var a = 'sapin'; var b=1; var c = a*b;|",
+			"yo [foo]",
 			"yo ::next()::",
 			"yo |mext()|",
+			*/
 		];
 		
 		for ( txt in tests) {
