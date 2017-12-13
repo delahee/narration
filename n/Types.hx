@@ -19,6 +19,7 @@ enum Lexem {
 	Star		;
 	DoubleStar	;
 	DoubleSemiColon;
+	BrackPosOpen;
 }
 
 enum Ast {
@@ -31,6 +32,7 @@ enum Ast {
 	UniqueEvent(str:String);
 	CondUniqueEvent(str:String);
 	Tag(tag:String, sub:Ast);
+	TagFrom(tag:String,isRestEmpty:Bool); 
 	Nop;
 	Script( str:String );
 }

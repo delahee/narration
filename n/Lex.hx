@@ -40,6 +40,8 @@ class Lex {
 				case Star				: "*";
 				case DoubleStar			: "**";
 				case DoubleSemiColon	: "::";
+				
+				case BrackPosOpen		: "[>";
 			}
 	}
 	
@@ -61,7 +63,8 @@ class Lex {
 				case BrackClose			: b.addChar("]".code);
 				case Star				: b.addChar("*".code);
 				case DoubleStar			: b.addChar("*".code);b.addChar("*".code);
-				case DoubleSemiColon	: b.addChar(":".code);b.addChar(":".code);
+				case DoubleSemiColon	: b.addChar(":".code); b.addChar(":".code);
+				case BrackPosOpen		: b.addChar("[".code); b.addChar(">".code);
 			}
 				
 		}
@@ -142,7 +145,15 @@ class Lex {
 				_parse( str, pp, result);
 				
 			case '[':	
-				var pp = pos+1;
+				var pp = pos + 1;
+				
+				if ( (pos + 1 < str.length) 
+				&& str.charCodeAt(pp) == '>'.code)
+				{
+					result.add( BrackPosOpen );
+					pp++;
+				}
+				else
 				if ( (pos + 1 < str.length) 
 				&& str.charCodeAt(pp) == '?'.code){
 					result.add( BrackCondOpen );

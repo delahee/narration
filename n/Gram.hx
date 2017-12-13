@@ -5,7 +5,7 @@ import n.Types;
 class Gram
 {
 
-	public function new() 
+	public inline function new() 
 	{
 		
 	}
@@ -28,12 +28,37 @@ class Gram
 		}
 	}
 	
+	inline function isRestEmpty(sub:Array<Lexem>,rest:Ast) : Bool {
+		return switch( rest ){
+			default: false;
+			case Nop: true;
+		}
+	}
+	
 	function _parse(str:Array<Lexem>, pos:Int) : Ast {
 		if ( pos >= str.length)
 			return Nop;
 		else
 		return
 		switch( str[pos]) {
+			
+			case BrackPosOpen:
+				var res = -1;
+				for ( i in pos+1...str.length)
+					if ( str[i] == BrackClose){
+						res = i;
+						break;
+					}
+				if ( res == -1) {
+					trace("corresponding "+BrackClose+" not found");
+					return mkSeq( Sentence("[>"), _parse( str, pos + 1));
+				}
+				else {
+					var sub = str.slice(pos + 1, res);
+					var rest : Ast = _parse(str, res + 1);
+					return mkSeq( TagFrom(restring(sub), isRestEmpty(sub,rest) ), rest);
+				}
+				
 			case Char(i):
 				var b = new StringBuf();
 				var pp = pos;
@@ -83,7 +108,8 @@ class Gram
 				trace( "unexpected " + str[pos]);
 				return mkSeq( Sentence(restringOne(str[pos])), _parse(str, pos + 1));
 			
-			case TagSelfClosed(s): return Tag( s , n.Ast.Nop );
+			case TagSelfClosed(s): 
+				return Tag( s , n.Ast.Nop );
 			
 			case TagOpen(s):
 				var res = seek( str, pos + 1, TagClose(s) );
