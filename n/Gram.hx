@@ -50,7 +50,7 @@ class Gram
 						break;
 					}
 				if ( res == -1) {
-					trace("corresponding "+BrackClose+" not found");
+					//trace("corresponding "+BrackClose+" not found");
 					return mkSeq( Sentence("[>"), _parse( str, pos + 1));
 				}
 				else {
@@ -67,7 +67,7 @@ class Gram
 					pp++;
 				}
 				var l = b.toString();
-				if ( pp >= str.length) 
+				if ( pp >= str.length)
 					return Sentence(l);
 				else 
 					return Seq( Sentence(l), _parse( str, pp ));
@@ -96,7 +96,7 @@ class Gram
 						break;
 					}
 				if ( res == -1) {
-					trace("corresponding "+elem+" not found");
+					//trace("corresponding "+elem+" not found");
 					return mkSeq( Sentence(lit), _parse( str, pos + 1));
 				}
 				else {
@@ -105,7 +105,7 @@ class Gram
 				}
 				
 			case AccClose, BrackClose, TagClose(_):
-				trace( "unexpected " + str[pos]);
+				//trace( "unexpected " + str[pos]);
 				return mkSeq( Sentence(restringOne(str[pos])), _parse(str, pos + 1));
 			
 			case TagSelfClosed(s): 
@@ -131,7 +131,7 @@ class Gram
 					case BrackCondOpen: BrackClose;
 				}
 				var closure = function(content) {
-					var str = n.Lex.lexemsToString(Lambda.list(content));
+					var str : String = n.Lex.lexemsToString(Lambda.list(content));
 					return switch(elem) {
 						default:throw "asert";
 						case BrackOpen: 	Ast.Event(str);
@@ -142,7 +142,7 @@ class Gram
 				}
 				var res = seek( str, pos + 1, close );
 				if ( res == -1) {
-					trace("corresponding "+close+" not found");
+					//trace("corresponding "+close+" not found");
 					return mkSeq( Sentence(restringOne(str[pos])), _parse( str, pos + 1));
 				}
 				

@@ -2,7 +2,6 @@ package n;
 
 class Types { }
 
-
 enum Lexem {
 	Char(c:Int)	;
 	Pipe		;

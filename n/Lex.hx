@@ -7,6 +7,8 @@ class Lex {
 
 	static var SPECIAL_CHARS :String = "|[]{}<>*:";
 	
+	public static inline var DEBUG = false;
+	
 	public function new() {
 		
 	}
@@ -81,24 +83,47 @@ class Lex {
 		return l;
 	}
 	
+	function charCodeAt(str:String, pos:Int):Int{
+		return haxe.Utf8.charCodeAt(str, pos);
+	}
+	
+	function charAt(str:String, pos:Int):String{
+		return haxe.Utf8.sub(str, pos,1);
+	}
+	
+	function strlen( str:String){
+		return haxe.Utf8.length(str);
+	}
+	
+	function sub( str:String,pos:Int,len:Int){
+		return haxe.Utf8.sub(str,pos,len);
+	}
+	
 	function _parse(str:String, pos:Int, result: List<Lexem>)  {
-		if ( pos >= str.length )
+		
+		#if !prod
+		if ( DEBUG ) trace( "cur res stack:" + result + " upon " + str + " pos:" + pos );
+		#end
+		
+		var len = strlen(str);
+		if ( pos >= len )
 			return;
 			
-		switch(str.charAt(pos)) {
+		switch( charAt(str,pos)) {
 
 			case ':':
 				var pp = pos + 1;
-				if ( (pp<str.length) && (str.charCodeAt(pp) == ':'.code) ){
+				if ( (pp < len) && ( charCodeAt(str,pp) == ':'.code) ){
 					result.add( DoubleSemiColon );
 					
 					pp++;
 					var opp = pp;
-					while (pp<str.length&&str.charCodeAt(pp) != ':'.code&&str.charCodeAt(pp+1) != ':'.code)
+					while (pp < len&& charCodeAt(str,pp) != ':'.code && charCodeAt(str,pp+1) != ':'.code)
 						pp++;
 						
 					var endpp = pp+1;
-					var lit = str.substring(opp, endpp);
+					var subLen = endpp - opp;
+					var lit = haxe.Utf8.sub( str,opp, subLen);
 					result.add(Literal(lit));
 					result.add( DoubleSemiColon );
 					_parse( str, pp+3, result);
@@ -108,9 +133,9 @@ class Lex {
 					_parse( str, pos + 1, result);
 				}
 			case '\\': 
-				if( (pos + 1 < str.length) 
-				&&	isSpecialChar(str.charCodeAt(pos + 1))) {
-					result.add( Char(str.charCodeAt(pos + 1)) );
+				if( (pos + 1 < len ) 
+				&&	isSpecialChar( charCodeAt(str,pos + 1)) ) {
+					result.add( Char( charCodeAt(str,pos + 1)) );
 					_parse( str, pos + 2, result);
 				}
 				else {
@@ -120,14 +145,15 @@ class Lex {
 			case '|':
 				var start = pos;
 				var end = pos + 1;
-				while ( end < str.length && str.charCodeAt(end) != '|'.code) {
+				while ( end < len && charCodeAt(str,end) != '|'.code) {
 					end++;
 				}
-				if ( end == str.length ) {
+				if ( end == len ) {
 					result.add( Char('|'.code) );
 				}
 				else {
-					var sub = str.substring( start + 1, end);
+					var subLen = end - (start + 1);
+					var sub = haxe.Utf8.sub( str, start + 1, subLen);
 					result.add(Pipe);
 					result.add(Literal(sub));
 					result.add(Pipe);
@@ -135,8 +161,8 @@ class Lex {
 				}
 			case '{':	
 				var pp = pos+1;
-				if ( (pos + 1 < str.length) 
-				&& str.charCodeAt(pp) == '?'.code){
+				if ( (pos + 1 < len) 
+				&& charCodeAt(str,pp) == '?'.code){
 					result.add( AccCondOpen );
 					pp++;
 				}
@@ -146,16 +172,17 @@ class Lex {
 				
 			case '[':	
 				var pp = pos + 1;
+				var len = strlen(str);
 				
-				if ( (pos + 1 < str.length) 
-				&& str.charCodeAt(pp) == '>'.code)
+				if ( (pos + 1 < len) 
+				&& charCodeAt(str,pp) == '>'.code)
 				{
 					result.add( BrackPosOpen );
 					pp++;
 				}
 				else
-				if ( (pos + 1 < str.length) 
-				&& str.charCodeAt(pp) == '?'.code){
+				if ( (pos + 1 < len) 
+				&& charCodeAt(str,pp) == '?'.code){
 					result.add( BrackCondOpen );
 					pp++;
 				}
@@ -165,41 +192,44 @@ class Lex {
 				
 			case '<':	
 				var pp = pos +1;
-				if ( (pp < str.length) 
-				&& str.charCodeAt(pp) == '/'.code){
+				if ( (pp < len) 
+				&& charCodeAt(str,pp) == '/'.code){
 					pp++;
 					
-					while (pp<str.length&&str.charCodeAt(pp) != '>'.code)
+					while ( pp< len && charCodeAt(str,pp) != '>'.code)
 						pp++;
 						
-					if ( pp == str.length) { //not found cancel
+					if ( pp == len ) { //not found cancel
 						result.add( Char('<'.code ));
 						_parse( str, pos + 1, result);
 						return;
 					}
 					else {
-						var lit = str.substring(pos+2, pp);
+						var sublen = pp - (pos + 2);
+						var lit = haxe.Utf8.sub(str,pos+2, sublen);
 						result.add(TagClose(lit));
 						_parse( str, pp + 1, result);
 					}
 				}
 				else {
-					while (pp<str.length&&str.charCodeAt(pp) != '>'.code)
+					while (pp < len && charCodeAt(str,pp) != '>'.code)
 						pp++;
 						
-					if ( pp == str.length) { //not found cancel
+					if ( pp == len ) { //not found cancel
 						result.add( Char('<'.code ) );
 						_parse( str, pos + 1, result);
 						return;
 					} else {
 						
-						if ( str.charCodeAt(pp - 1) == '/'.code) {
-							var lit = str.substring(pos + 1, pp-1);
+						if ( charCodeAt(str, pp - 1) == '/'.code) {
+							var subLen = (pp - 1) - (pos + 1);
+							var lit = haxe.Utf8.sub(str,pos + 1, subLen);
 							result.add(TagSelfClosed(lit));
 							_parse( str, pp + 1, result);
 						}
 						else {
-							var lit = str.substring(pos + 1, pp);
+							var subLen = pp - (pos + 1);
+							var lit = haxe.Utf8.sub(str,pos + 1, subLen);
 							result.add(TagOpen(lit));
 							_parse( str, pp + 1, result);
 						}
@@ -210,32 +240,35 @@ class Lex {
 				result.add( Char('>'.code) );
 				
 			default:
-				var c = str.charAt(pos);
-				if( isSentenceChar(c.fastCodeAt(0))){
-					result.add(Char(str.charCodeAt(pos)));
+				var c = charAt(str,pos);
+				if( isSentenceChar( charCodeAt(c,0))){
+					result.add(Char(charCodeAt(str,pos)));
 					_parse( str, pos + 1, result);
 				}
 				else {
-				var pp = pos + 1;
-				switch(c.fastCodeAt(0)) {
-					default: throw "unsuported special";
-					case '*'.code:
-						if ( pp<str.length && str.charCodeAt(pp) == '*'.code){
-							result.add( DoubleStar );
-							pp++;
-						}
-						else 
-							result.add( Star );
-					//case '|'.code:	result.add( Pipe );
-					//case '<'.code:	result.add( TagOpen );
-					//case '>'.code:	result.add( TagClose );
-					
-					case '}'.code:	result.add( AccClose );
-					case ']'.code:	result.add( BrackClose );
+					var pp = pos + 1;
+				
+					var code = charCodeAt(c,0);
+					switch(code) {
+						default: 
+							throw "unsuported special "+code+" "+String.fromCharCode(code)+" reading from "+c;
+						case '*'.code:
+							if ( pp< len && charCodeAt(str,pp) == '*'.code){
+								result.add( DoubleStar );
+								pp++;
+							}
+							else 
+								result.add( Star );
+						//case '|'.code:	result.add( Pipe );
+						//case '<'.code:	result.add( TagOpen );
+						//case '>'.code:	result.add( TagClose );
+						
+						case '}'.code:	result.add( AccClose );
+						case ']'.code:	result.add( BrackClose );
+					}
+					_parse( str, pp, result);
 				}
-				_parse( str, pp, result);
 			}
-		}
 		
 	}
 	
