@@ -2,9 +2,10 @@ package n;
 
 import n.Types;
 
-class Gram
-{
+class Gram{
 
+	public static inline var DEBUG = false;
+	
 	public inline function new() 
 	{
 		
@@ -60,7 +61,7 @@ class Gram
 				}
 				
 			case Char(i):
-				var b = new StringBuf();
+				var b = new haxe.Utf8();
 				var pp = pos;
 				while( pp < str.length && isChar(str[pp])) {
 					b.addChar( getChar( str[pp] ));
@@ -131,7 +132,7 @@ class Gram
 					case BrackCondOpen: BrackClose;
 				}
 				var closure = function(content) {
-					var str : String = n.Lex.lexemsToString(Lambda.list(content));
+					var str : String = n.Lex.lexemsToString(content);
 					return switch(elem) {
 						default:throw "asert";
 						case BrackOpen: 	Ast.Event(str);
@@ -161,7 +162,7 @@ class Gram
 	inline function restringOne(elem) return  n.Lex.lexemToString(elem);
 	
 	inline function restring(str:Array<Lexem>) {
-		return  n.Lex.lexemsToString(Lambda.list(str));
+		return n.Lex.lexemsToString(str);
 	}
 	
 	function seek(str:Array<Lexem>, start:Int, tok:Lexem) : Int {

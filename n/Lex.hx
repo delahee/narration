@@ -7,7 +7,7 @@ class Lex {
 
 	static var SPECIAL_CHARS :String = "|[]{}<>*:";
 	
-	public static inline var DEBUG = false;
+	public static inline var DEBUG = true;
 	
 	public function new() {
 		
@@ -15,19 +15,24 @@ class Lex {
 	
 	public inline function isSpecialChar(cc:Int) : Bool {
 		var r = false;
-		for ( s in 0...SPECIAL_CHARS.length)
-			if ( SPECIAL_CHARS.fastCodeAt(s) == cc ){
+		for ( s in 0...strlen(SPECIAL_CHARS))
+			if ( haxe.Utf8.charCodeAt(SPECIAL_CHARS,s) == cc ){
 				r = true;
 				break;
 			}
 		return r;
 	}
 	
+	static inline function fromCharCode(code:Int):String{
+		var utf = new haxe.Utf8();
+		utf.addChar(code);
+		return utf.toString();
+	}
 	
 	public static inline function lexemToString(l:Lexem ) : String {
 		return 
 			switch(l) {
-				case Char(c)			: String.fromCharCode(c);
+				case Char(c)			: fromCharCode(c);//use new utf8.add?
 				case Pipe				: '|';
 				case Literal(str)		: str;
 				case AccOpen			: "}";
@@ -47,24 +52,30 @@ class Lex {
 			}
 	}
 	
-	public static inline function lexemsToString(l:List<Lexem> ) : String {
-		var b = new StringBuf();
+	public static function utf8Append( inout:haxe.Utf8, str : String){
+		haxe.Utf8.iter( str, function(code){
+			inout.addChar(code);
+		});
+	}
+	
+	public static function lexemsToString(l:Array<Lexem> ) : String {
+		var b = new haxe.Utf8();
 		for ( p in l) {
 			switch(p) {
 				case Char(c)			: b.addChar(c);
 				case Pipe				: b.addChar('|'.code);
-				case Literal(str)		: b.add(str);
+				case Literal(str)		: utf8Append(b,str);
 				case AccOpen			: b.addChar("}".code);
-				case AccCondOpen		: b.add("{?");
+				case AccCondOpen		: utf8Append(b,"{?");
 				case AccClose			: b.addChar("}".code);
-				case TagOpen(_)			: b.add(lexemToString(p));
-				case TagClose(_)		: b.add(lexemToString(p));
-				case TagSelfClosed(_)	: b.add(lexemToString(p));
+				case TagOpen(_)			: utf8Append(b,lexemToString(p));
+				case TagClose(_)		: utf8Append(b,lexemToString(p));
+				case TagSelfClosed(_)	: utf8Append(b,lexemToString(p));
 				case BrackOpen			: b.addChar("[".code);
-				case BrackCondOpen		: b.add("[?");
+				case BrackCondOpen		: utf8Append(b,"[?");
 				case BrackClose			: b.addChar("]".code);
 				case Star				: b.addChar("*".code);
-				case DoubleStar			: b.addChar("*".code);b.addChar("*".code);
+				case DoubleStar			: b.addChar("*".code); b.addChar("*".code);
 				case DoubleSemiColon	: b.addChar(":".code); b.addChar(":".code);
 				case BrackPosOpen		: b.addChar("[".code); b.addChar(">".code);
 			}
@@ -99,10 +110,10 @@ class Lex {
 		return haxe.Utf8.sub(str,pos,len);
 	}
 	
-	function _parse(str:String, pos:Int, result: List<Lexem>)  {
+	function _parse(str:String, pos:Int, result : List<Lexem>)  {
 		
 		#if !prod
-		if ( DEBUG ) trace( "cur res stack:" + result + " upon " + str + " pos:" + pos );
+		//if ( DEBUG ) trace( "cur res stack:" + result + " upon " + str + " pos:" + pos );
 		#end
 		
 		var len = strlen(str);
